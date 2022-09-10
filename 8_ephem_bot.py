@@ -15,6 +15,7 @@
 from itertools import tee
 import logging
 import ephem
+from datetime import date
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
@@ -33,33 +34,40 @@ logging.basicConfig(format='%(name)s - %(levelname)s - %(message)s',
 
 
 def greet_user(update, context):
-    text = 'Вызван /start'
-    print(text)
-    update.message.reply_text(text)
+    update.message.reply_text('Use command "/planet [name]"')
 
 
 def name_planet(update, context):
-    user_text = update.message.text
-    comm_planet = user_text.split()
     
-
-    print(user_text)
-    update.message.reply_text(user_text)
-
-
-def planet_search(update, context):
-
-    name = ephem.update.message.text('2000/01/01') #определение планеты в настоящее время
-    constellation = ephem.constellation(update.message.text) #скажет в каком созвездии была планета на определенную дату
-    print(constellation)
+    #Принимаем значение от пользователя
+    user_text = update.message.text.split()
+    #Сегодняшняя дата
+    today = date.today().strftime("%Y/%m/%d")
+    planet_name = user_text[1].capitalize()
+    #Поиск планеты
+    if user_text[0] == '/planet' and len(user_text) < 2:
+      #Определение планет на сегодня
+      if planet_name == 'Mars':
+        constellation = ephem.constellation(ephem.Mars(today))
+      elif planet_name == 'Jupiter':
+        constellation = ephem.constellation(ephem.Jupiter(today))
+      elif planet_name == 'Saturn':
+        constellation = ephem.constellation(ephem.Saturn(today))
+      else:
+          update.message.reply_text('Unknown planet. Please try again')
+      update.message.reply_text(f'Planete {planet_name} is in {constellation[1]}')
+    else:
+      update.message.reply_text('Unknown command. Please try again')
+      return
 
 def main():
     mybot = Updater("5494600204:AAGsihHglAuzcThN_CxTVL-aQo2CLJxQG0A", use_context=True) #request_kwargs=PROXY,
-
-    dp = mybot.dispatcher
-    dp.add_handler(CommandHandler("start", greet_user))
-    dp.add_handler(MessageHandler(Filters.text, name_planet))
     
+    dp = mybot.dispatcher
+
+    dp.start
+    dp.add_handler(CommandHandler("start", greet_user))
+    dp.add_handler(MessageHandler(Filters.text, name_planet))  
 
     mybot.start_polling()
     mybot.idle()
